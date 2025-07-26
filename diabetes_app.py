@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import joblib
 from pathlib import Path
+from utils import bmi_category
 
 st.title("Diabetes Prediction App")
 st.write("""
@@ -36,16 +37,6 @@ def user_input_features():
         'Age': [Age]
     })
     return df
-
-def bmi_category(bmi):
-    if bmi < 18.5:
-        return 'underweight'
-    elif 18.5 <= bmi < 25:
-        return 'Normal'
-    elif 25 <= bmi < 30:
-        return 'overweight'
-    else:
-        return 'obese'
 
 input_df = user_input_features()
 
