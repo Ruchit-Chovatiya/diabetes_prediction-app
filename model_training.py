@@ -11,6 +11,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
+from utils import bmi_category
 from pathlib import Path
 
 # 1) Load data
@@ -19,16 +20,6 @@ df = pd.read_csv("diabetes.csv")
 
 cols_with_invalid_zeros = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
 df[cols_with_invalid_zeros] = df[cols_with_invalid_zeros].replace(0, np.nan)
-
-def bmi_category(bmi):
-    if bmi < 18.5:
-        return 'underweight'
-    elif 18.5 <= bmi < 25:
-        return 'Normal'
-    elif 25 <= bmi < 30:
-        return 'overweight'
-    else:
-        return 'obese'
 
 df['BMI_category'] = df['BMI'].apply(bmi_category)
 df['Age_group'] = pd.cut(df['Age'],
