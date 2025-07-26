@@ -12,7 +12,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
 from pathlib import Path
-from utils import bmi_category  # ✅ Import the function from utils
+from utils import bmi_category
 
 # 1) Load data
 df = pd.read_csv("diabetes.csv")
