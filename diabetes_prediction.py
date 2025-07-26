@@ -4,18 +4,21 @@ Author: Chovatiya Ruchit
 """
 
 # 1. Import Libraries
-import numpy as np
 import pandas as pd
-import joblib
-
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
+import joblib
+from utils import bmi_category
+from pathlib import Path
 
 # 2. Load Dataset
 df = pd.read_csv("diabetes.csv")
