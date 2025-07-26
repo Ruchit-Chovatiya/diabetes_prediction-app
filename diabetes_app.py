@@ -3,15 +3,16 @@ import pandas as pd
 import numpy as np
 import joblib
 from pathlib import Path
-from utils import bmi_category
 
-st.title("Diabetes Prediction App")
+st.set_page_config(page_title="Diabetes Prediction", layout="centered")
+
+st.title("🩺 Diabetes Prediction App")
 st.write("""
-Predict the likelihood of diabetes from basic health parameters.
+Predict the likelihood of diabetes based on basic health parameters.
 """)
 
-# Load pipeline
-MODEL_PATH = Path("models/best_pipeline.pkl")
+# Load the trained pipeline
+MODEL_PATH = Path("best_pipeline.pkl")
 pipe = joblib.load(MODEL_PATH)
 
 st.sidebar.header("Input Patient Data")
@@ -26,7 +27,7 @@ def user_input_features():
     DiabetesPedigreeFunction = st.sidebar.number_input('Diabetes Pedigree Function', 0.0, 3.0, 0.5)
     Age = st.sidebar.number_input('Age', 20, 100, 30)
 
-    df = pd.DataFrame({
+    input_df = pd.DataFrame({
         'Pregnancies': [Pregnancies],
         'Glucose': [Glucose],
         'BloodPressure': [BloodPressure],
@@ -36,31 +37,36 @@ def user_input_features():
         'DiabetesPedigreeFunction': [DiabetesPedigreeFunction],
         'Age': [Age]
     })
-    return df
+
+    return input_df
 
 input_df = user_input_features()
 
-# Feature engineering to match training
-input_df['BMI_category'] = input_df['BMI'].apply(bmi_category)
-bins = [20, 30, 40, 50, 60, 100]
-labels = ['20-30', '30-40', '40-50', '50-60', '60+']
-input_df['Age_group'] = pd.cut(input_df['Age'], bins=bins, labels=labels, right=False)
+# Feature engineering (same as training)
+input_df['BMI_category'] = pd.cut(
+    input_df['BMI'],
+    bins=[0, 18.5, 25, 30, np.inf],
+    labels=['underweight', 'Normal', 'overweight', 'obese'],
+    right=False
+)
 
-# Predict
-prediction = pipe.predict(input_df)
-if hasattr(pipe.named_steps['classifier'], "predict_proba"):
-    probability = pipe.predict_proba(input_df)[0][1]
-else:
-    probability = None
+input_df['Age_group'] = pd.cut(
+    input_df['Age'],
+    bins=[20, 30, 40, 50, 60, 100],
+    labels=['20-30', '30-40', '40-50', '50-60', '60+'],
+    right=False
+)
 
-st.subheader("Prediction")
-if prediction[0] == 1:
-    if probability is not None:
-        st.error(f"Likely diabetic. Probability: {probability:.2f}")
+# Prediction
+if st.button("Predict"):
+    prediction = pipe.predict(input_df)[0]
+    if hasattr(pipe.named_steps['classifier'], "predict_proba"):
+        proba = pipe.predict_proba(input_df)[0][1]
     else:
-        st.error(f"Likely diabetic.")
-else:
-    if probability is not None:
-        st.success(f"Unlikely diabetic. Probability: {probability:.2f}")
+        proba = None
+
+    st.subheader("Prediction Result")
+    if prediction == 1:
+        st.error(f"⚠️ Likely Diabetic{' - Probability: {:.2f}'.format(proba) if proba else ''}")
     else:
-        st.success(f"Unlikely diabetic.")
+        st.success(f"✅ Unlikely Diabetic{' - Probability: {:.2f}'.format(proba) if proba else ''}")

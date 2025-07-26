@@ -11,54 +11,57 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
-from utils import bmi_category
 from pathlib import Path
 
 # 1) Load data
-
 df = pd.read_csv("diabetes.csv")
 
+# Replace invalid 0s with NaN
 cols_with_invalid_zeros = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
 df[cols_with_invalid_zeros] = df[cols_with_invalid_zeros].replace(0, np.nan)
 
-df['BMI_category'] = df['BMI'].apply(bmi_category)
-df['Age_group'] = pd.cut(df['Age'],
-                         bins=[20, 30, 40, 50, 60, 100],
-                         labels=['20-30', '30-40', '40-50', '50-60', '60+'],
-                         right=False)
+# Inline BMI category (no external function)
+df['BMI_category'] = pd.cut(
+    df['BMI'],
+    bins=[0, 18.5, 25, 30, np.inf],
+    labels=['underweight', 'Normal', 'overweight', 'obese'],
+    right=False
+)
 
+# Age group
+bins = [20, 30, 40, 50, 60, 100]
+labels = ['20-30', '30-40', '40-50', '50-60', '60+']
+df['Age_group'] = pd.cut(df['Age'], bins=bins, labels=labels, right=False)
+
+# Features and target
 X = df.drop(columns=['Outcome'])
 y = df['Outcome']
 
-# 2) Preprocess
-
+# 2) Preprocessing
 numeric_features = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin',
                     'BMI', 'DiabetesPedigreeFunction', 'Age']
 categorical_features = ['BMI_category', 'Age_group']
 
-numeric_transformer = Pipeline(steps=[
+numeric_transformer = Pipeline([
     ('imputer', SimpleImputer(strategy='mean')),
     ('scaler', StandardScaler())
 ])
 
-categorical_transformer = Pipeline(steps=[
+categorical_transformer = Pipeline([
     ('encoder', OneHotEncoder(drop='first', dtype=int))
 ])
 
-preprocessor = ColumnTransformer(
-    transformers=[
-        ('num', numeric_transformer, numeric_features),
-        ('cat', categorical_transformer, categorical_features)
-    ],
-    remainder='drop'
-)
+preprocessor = ColumnTransformer([
+    ('num', numeric_transformer, numeric_features),
+    ('cat', categorical_transformer, categorical_features)
+])
 
 # 3) Train-test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-
-# 4) Evaluate models
-
+# 4) Train multiple models
 models = {
     "LogisticRegression": LogisticRegression(solver='liblinear'),
     "KNN": KNeighborsClassifier(),
@@ -90,8 +93,6 @@ for name, clf in models.items():
 
 print(f"\nBest Model: {best_model_name} with Accuracy: {best_score:.4f}")
 
-# 5) Save best pipeline
-
-Path("models").mkdir(exist_ok=True, parents=True)
-joblib.dump(best_pipe, f"models/best_pipeline.pkl")
-print("Saved pipeline to models/best_pipeline.pkl")
+# 5) Save the best pipeline
+joblib.dump(best_pipe, "best_pipeline.pkl")
+print("✅ Saved pipeline to best_pipeline.pkl")
