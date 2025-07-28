@@ -9,40 +9,51 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
 from pathlib import Path
-from utils import bmi_category
+
+# ✅ Custom transformer for feature engineering
+class FeatureEngineer(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X):
+        X = X.copy()
+        X['BMI_category'] = pd.cut(
+            X['BMI'], bins=[0, 18.5, 25, 30, np.inf],
+            labels=['underweight', 'Normal', 'overweight', 'obese'],
+            right=False
+        )
+        X['Age_group'] = pd.cut(
+            X['Age'], bins=[20, 30, 40, 50, 60, 100],
+            labels=['20-30', '30-40', '40-50', '50-60', '60+'],
+            right=False
+        )
+        return X
 
 # 1) Load data
 df = pd.read_csv("diabetes.csv")
 
-# Replace 0s with NaNs in columns where 0 is invalid
+# Replace 0s with NaNs where appropriate
 cols_with_invalid_zeros = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
 df[cols_with_invalid_zeros] = df[cols_with_invalid_zeros].replace(0, np.nan)
 
-# Add BMI category using imported function
-df['BMI_category'] = df['BMI'].apply(bmi_category)
-
-# Create Age group column
-bins = [20, 30, 40, 50, 60, 100]
-labels = ['20-30', '30-40', '40-50', '50-60', '60+']
-df['Age_group'] = pd.cut(df['Age'], bins=bins, labels=labels, right=False)
-
-# Define features and target
-X = df.drop(columns=['Outcome'])
+# Target
 y = df['Outcome']
+X = df.drop(columns=['Outcome'])
 
-# Define preprocessing for numeric and categorical features
+# Define feature lists
 numeric_features = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin',
                     'BMI', 'DiabetesPedigreeFunction', 'Age']
 categorical_features = ['BMI_category', 'Age_group']
 
+# Preprocessors
 numeric_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='mean')),
     ('scaler', StandardScaler())
 ])
-
 categorical_transformer = Pipeline(steps=[
     ('encoder', OneHotEncoder(drop='first', dtype=int))
 ])
@@ -52,10 +63,12 @@ preprocessor = ColumnTransformer(transformers=[
     ('cat', categorical_transformer, categorical_features)
 ])
 
-# Train-test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+# Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-# Train multiple models
+# Models
 models = {
     "LogisticRegression": LogisticRegression(solver='liblinear'),
     "KNN": KNeighborsClassifier(),
@@ -67,8 +80,10 @@ best_model_name = None
 best_score = 0.0
 best_pipe = None
 
+# Training loop
 for name, clf in models.items():
-    pipe = Pipeline([
+    pipe = Pipeline(steps=[
+        ('feature_engineering', FeatureEngineer()),
         ('preprocessor', preprocessor),
         ('classifier', clf)
     ])
@@ -85,9 +100,9 @@ for name, clf in models.items():
         best_model_name = name
         best_pipe = pipe
 
-print(f"\nBest Model: {best_model_name} with Accuracy: {best_score:.4f}")
+print(f"\n✅ Best Model: {best_model_name} with Accuracy: {best_score:.4f}")
 
-# Save best pipeline
+# Save
 Path("models").mkdir(exist_ok=True, parents=True)
-joblib.dump(best_pipe, "models/best_pipeline.pkl")
+joblib.dump(best_pipe, "models/best_pipeline.pkl", compress=3)
 print("✅ Saved best model to models/best_pipeline.pkl")

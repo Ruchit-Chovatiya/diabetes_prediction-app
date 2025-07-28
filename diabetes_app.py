@@ -7,12 +7,10 @@ from pathlib import Path
 st.set_page_config(page_title="Diabetes Prediction", layout="centered")
 
 st.title("🩺 Diabetes Prediction App")
-st.write("""
-Predict the likelihood of diabetes based on basic health parameters.
-""")
+st.write("Predict the likelihood of diabetes based on basic health parameters.")
 
 # Load the trained pipeline
-MODEL_PATH = Path("best_pipeline.pkl")
+MODEL_PATH = Path("models/best_pipeline.pkl")
 pipe = joblib.load(MODEL_PATH)
 
 st.sidebar.header("Input Patient Data")
@@ -42,7 +40,7 @@ def user_input_features():
 
 input_df = user_input_features()
 
-# Feature engineering (same as training)
+# Feature engineering (same as in FeatureEngineer from training)
 input_df['BMI_category'] = pd.cut(
     input_df['BMI'],
     bins=[0, 18.5, 25, 30, np.inf],
