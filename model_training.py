@@ -43,7 +43,8 @@ categorical_transformer = Pipeline(steps=[
 preprocessor = ColumnTransformer(transformers=[
     ('num', numeric_transformer, numeric_features),
     ('cat', categorical_transformer, categorical_features)
-])
+], remainder='drop')  # ✅ add this
+
 
 # Split
 X_train, X_test, y_train, y_test = train_test_split(
