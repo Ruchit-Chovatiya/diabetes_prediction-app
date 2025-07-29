@@ -9,7 +9,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.base import BaseEstimator, TransformerMixin
 from utils import FeatureEngineer
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
