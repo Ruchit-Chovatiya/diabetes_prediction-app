@@ -10,28 +10,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import BaseEstimator, TransformerMixin
+from utils import FeatureEngineer
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
 from pathlib import Path
-
-# ✅ Custom transformer for feature engineering
-class FeatureEngineer(BaseEstimator, TransformerMixin):
-    def fit(self, X, y=None):
-        return self
-    
-    def transform(self, X):
-        X = X.copy()
-        X['BMI_category'] = pd.cut(
-            X['BMI'], bins=[0, 18.5, 25, 30, np.inf],
-            labels=['underweight', 'Normal', 'overweight', 'obese'],
-            right=False
-        )
-        X['Age_group'] = pd.cut(
-            X['Age'], bins=[20, 30, 40, 50, 60, 100],
-            labels=['20-30', '30-40', '40-50', '50-60', '60+'],
-            right=False
-        )
-        return X
 
 # 1) Load data
 df = pd.read_csv("diabetes.csv")

@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from utils import FeatureEngineer
 import joblib
 from pathlib import Path
 
